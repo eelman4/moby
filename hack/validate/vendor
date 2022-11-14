@@ -29,13 +29,12 @@ validate_vendor_diff() {
 }
 
 validate_vendor_license() {
-	for f in $(mawk '$1 = "#" { print $2 }' 'vendor/modules.txt'); do
-		if [ -d "vendor/$f" ]; then
-			if ! echo "vendor/$f"/* | grep -qiEc '/(LICENSE|COPYING)'; then
-				echo >&2 "WARNING: could not find copyright information for $f"
-			fi
+	while IFS= read -r module; do
+		test -d "vendor/$module" || continue
+		if ! compgen -G "vendor/$module/*" | grep -qEi '/(LICENSE|COPYING)[^/]*$'; then
+			echo >&2 "WARNING: could not find copyright information for $module"
 		fi
-	done
+	done < <(awk '/^# /{ print $2 }' vendor/modules.txt)
 }
 
 if validate_vendor_tidy && validate_vendor_diff && validate_vendor_license; then
