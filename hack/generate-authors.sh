@@ -1,15 +1,19 @@
 #!/usr/bin/env bash
+
 set -e
 
-cd "$(dirname "$(readlink -f "$BASH_SOURCE")")/.."
+SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOTDIR="$(git -C "$SCRIPTDIR" rev-parse --show-toplevel)"
+
+# ensure that the sort order is not locale-dependent
+export LC_ALL=C.UTF-8 
+
+set -x
 
 # see also ".mailmap" for how email addresses and names are deduplicated
+tee "${ROOTDIR}/AUTHORS" <<-EOF
+	# This file is @generated and lists all contributors to the repository.
+	# See hack/generate-authors.sh to make modifications.
 
-{
-	cat <<- 'EOH'
-		# This file lists all individuals having contributed content to the repository.
-		# For how it is generated, see `hack/generate-authors.sh`.
-	EOH
-	echo
-	git log --format='%aN <%aE>' | LC_ALL=C.UTF-8 sort -uf
-} > AUTHORS
+	$(git -C "$ROOTDIR" log --format='%aN <%aE>' | sort -uf)
+EOF
